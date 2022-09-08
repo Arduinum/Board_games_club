@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# From Pycharm
+.idea/
+
+# For examples
+Lesson1.  Code for lesson/
+
+# For tests
+test.py
