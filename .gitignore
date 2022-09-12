@@ -132,7 +132,7 @@ dmypy.json
 .idea/
 
 # For examples
-Lesson1.  Code for lesson/
+Lessons/
 
 # For tests
 test.py
