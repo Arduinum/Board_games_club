@@ -1,0 +1,55 @@
+<div id="content">
+    <h2>Мероприятия</h2>
+    <p>Расписание проведения игр {{ date }}:</p>
+    <table style="width:100%; border-spacing:0;">
+        <tr>
+            <th></th>
+            <th>{{ data[0]['games_01']['town'] }}</th>
+            <th>{{ data[0]['games_02']['town'] }}</th>
+            <th>{{ data[0]['games_03']['town'] }}</th>
+        </tr>
+        <tr>
+            <th>{{ data[0]['name'][0] }}</th>
+            <td>{{ data[0]['games_01']['date'][0] }}<br/>{{ data[0]['games_01']['time'] }}</td>
+            <td>{{ data[0]['games_02']['date'][0] }}<br/>{{ data[0]['games_02']['time'] }}</td>
+            <td>{{ data[0]['games_02']['date'][0] }}<br/>{{ data[0]['games_03']['time'] }}</td>
+        </tr>
+        <tr>
+            <th>{{ data[0]['name'][1] }}</th>
+            <td>{{ data[0]['games_01']['date'][1] }}<br/>{{ data[0]['games_01']['time'] }}</td>
+            <td>{{ data[0]['games_02']['date'][1] }}<br/>{{ data[0]['games_02']['time'] }}</td>
+            <td>{{ data[0]['games_03']['date'][1] }}<br/>{{ data[0]['games_03']['time'] }}</td>
+        </tr>
+        <tr>
+            <th>{{ data[0]['name'][2] }}</th>
+            <td>{{ data[0]['games_01']['date'][2] }}<br/>{{ data[0]['games_01']['time'] }}</td>
+            <td>{{ data[0]['games_02']['date'][2] }}<br/>{{ data[0]['games_02']['time'] }}</td>
+            <td>{{ data[0]['games_03']['date'][2] }}<br/>{{ data[0]['games_03']['time'] }}</td>
+        </tr>
+        <tr>
+            <th>{{ data[0]['name'][3] }}</th>
+            <td>{{ data[0]['games_01']['date'][3] }}<br/>{{ data[0]['games_01']['time'] }}</td>
+            <td>{{ data[0]['games_02']['date'][3] }}<br/>{{ data[0]['games_02']['time'] }}</td>
+            <td>{{ data[0]['games_03']['date'][3] }}<br/>{{ data[0]['games_03']['time'] }}</td>
+        </tr>
+    </table>
+    <h2>Регистрация на игру</h2>
+    <form action="#" method="post">
+        <div class="form_settings">
+            <p><span>Ваше имя</span><input type="text" name="name" value=""/></p>
+            <p><span>Почта</span><input type="text" name="mail" value=""/></p>
+            <p><span>Инструменты для игры, которые возьмёте</span><textarea rows="8" cols="50"
+                                                                            name="text"></textarea></p>
+            <p><span>Есть ли вам 18 лет</span><input class="checkbox" id="age-18" type="checkbox" name="age-18"
+                                                     value="True"/></p>
+            <p><span>Город клуба</span><select id="id" name="town">
+                <option value="Нижний Новгород">Нижний Новгород</option>
+                <option value="Москва">Москва</option>
+                <option value="Саратов">Саратов</option>
+            </select></p>
+            <p style="padding-top: 15px"><span>&nbsp;</span><input class="submit" type="submit"
+                                                                   name="register_game_form" value="Отправить"/>
+            </p>
+        </div>
+    </form>
+</div>

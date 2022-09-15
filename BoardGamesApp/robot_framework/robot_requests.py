@@ -1,5 +1,5 @@
 class RobotRequests:
-    """Класс, для работы с запросами"""
+    """Класс родитель, для работы с запросами"""
     @staticmethod
     def parse_str_data(data: str):
         """Метод класса, который парсит строку, кладя данные в словарь"""
@@ -10,15 +10,17 @@ class RobotRequests:
                 data_dict[key_value.split('=')[0]] = key_value.split('=')[1]
         return data_dict
 
-    def get_request_params(self, environ, request_name):
-        """Метод класса для получения параметров запроса в виде словаря"""
-        if request_name == 'GET':
-            query_str = environ['QUERY_STRING']
-            return self.parse_str_data(query_str)
-        elif request_name == 'POST':
-            data = self.get_wsgi_input_data(environ)
-            return self.parse_wsgi_input_data(data)
 
+class GetRequest(RobotRequests):
+    """Класс для работы с get запросами"""
+    def get_request_params(self, environ):
+        """Метод класса для получения параметров запроса в виде словаря"""
+        query_str = environ['QUERY_STRING']
+        return self.parse_str_data(query_str)
+
+
+class PostRequest(RobotRequests):
+    """Класс для работы с post запросами"""
     @staticmethod
     def get_wsgi_input_data(environ) -> bytes:
         """Метод класса для проверки содержимого post запроса"""
@@ -34,13 +36,18 @@ class RobotRequests:
             bytes_decode = data.decode(encoding='utf-8')
             return self.parse_str_data(bytes_decode)
 
+    def get_request_params(self, environ):
+        """Метод класса для получения параметров запроса в виде словаря"""
+        data = self.get_wsgi_input_data(environ)
+        return self.parse_wsgi_input_data(data)
+
 
 if __name__ == '__main__':
     str_parse = RobotRequests.parse_str_data('id=2&category=12')
     print(str_parse)
 
-    bytes_parse = RobotRequests().parse_wsgi_input_data(b'id=5&category=13')
+    bytes_parse = PostRequest().parse_wsgi_input_data(b'id=5&category=13')
     print(bytes_parse)
 
-    bytes_parse = RobotRequests().parse_wsgi_input_data(b'')
+    bytes_parse = PostRequest().parse_wsgi_input_data(b'')
     print(bytes_parse)

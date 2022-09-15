@@ -1,5 +1,5 @@
 from quopri import decodestring
-from robot_framework.robot_requests import RobotRequests
+from robot_framework.robot_requests import GetRequest, PostRequest
 from json import dump
 
 
@@ -27,13 +27,13 @@ class RobotFramework:
         request['method_now'] = method_now
 
         if method_now == 'POST':
-            data_post = RobotRequests().get_request_params(environ, 'POST')
+            data_post = PostRequest().get_request_params(environ)
             request['data_post'] = self.decode_value(data_post)
             if request["data_post"]:
                 self.saver_form_data(request['data_post'])
                 print(f'На сервер пришёл POST-запрос - {request["data_post"]}')
         if method_now == 'GET':
-            data_get = RobotRequests().get_request_params(environ, 'GET')
+            data_get = GetRequest().get_request_params(environ)
             request['data_get'] = self.decode_value(data_get)
             if request['data_get']:
                 print(f'На сервер пришли GET-параметры - {request["data_get"]}')
@@ -64,5 +64,6 @@ class RobotFramework:
     @staticmethod
     def saver_form_data(data):
         """Метод класса для сохранения данных формы регистрации на игру в json документ"""
-        with open(f'form_register_{data["name"]}.json', 'w', encoding='utf-8') as file:
+        name_form = [key for key in data.keys()][-1]
+        with open(f'{name_form}_{data["name"]}.json', 'w', encoding='utf-8') as file:
             dump(data, file, indent=4, ensure_ascii=False)

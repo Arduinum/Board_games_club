@@ -136,3 +136,6 @@ Lessons/
 
 # For tests
 test.py
+
+# For html
+templates_copy/
