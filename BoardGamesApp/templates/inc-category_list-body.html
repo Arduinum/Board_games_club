@@ -1,0 +1,13 @@
+<div class="content">
+    <a href="/">назад</a>
+    <h1>Список категорий</h1>
+    <ul>
+        {% for item in data_list %}
+        <li>
+            {{item.name}} <span>Количество игр: {{item.game_count()}}</span> <a href="/create-game/?id={{item.id}}">
+            Создать игру</a>
+            <br><a href="/games-list/?id={{item.id}}">Список игр</a><br>
+        </li>
+        {% endfor %}
+    </ul>
+</div>

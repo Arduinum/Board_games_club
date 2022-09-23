@@ -1,4 +1,4 @@
-from views import Index, Contact, Events, AboutUs
+from views import Index, Contact, Events, AboutUs, GamesList, CreateGame, CreateCategory, CategoryList, CopyGame
 from datetime import date
 
 
@@ -19,5 +19,10 @@ routes = {
     '/': Index(),
     '/contact/': Contact(),
     '/events/': Events(),
-    '/about/': AboutUs()
+    '/about/': AboutUs(),
+    '/games-list/': GamesList(),
+    '/create-game/': CreateGame(),
+    '/copy-game/': CopyGame(),
+    '/create-category/': CreateCategory(),
+    '/category-list/': CategoryList()
 }

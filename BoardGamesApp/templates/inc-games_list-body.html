@@ -1,0 +1,14 @@
+<div class="content">
+    <div>
+        <a href="/">назад</a>
+    </div>
+    <div>
+        <a href="/create-game/?id={{id}}">Создать новую игру</a>
+        <h1>Список игр с категорией "{{name}}"</h1>
+        {% for item in data_list %}
+            <li>
+                {{item.name}} <span><a href="/copy-game/?name={{item.name}}">скопировать игру</a></span>
+            </li>
+        {% endfor %}
+    </div>
+</div>
