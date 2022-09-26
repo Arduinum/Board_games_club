@@ -1,6 +1,7 @@
 from wsgiref.simple_server import make_server
 from robot_framework.main import RobotFramework
-from urls import routes, fronts
+from urls import fronts
+from views import routes
 
 
 app = RobotFramework(routes, fronts)

@@ -1,4 +1,4 @@
-from views import Index, Contact, Events, AboutUs, GamesList, CreateGame, CreateCategory, CategoryList, CopyGame
+# from views import Index, Contact, Events, AboutUs, GamesList, CreateGame, CreateCategory, CategoryList, CopyGame
 from datetime import date
 
 
@@ -15,14 +15,14 @@ def other_front(request):
 
 fronts = [date_front, other_front]
 
-routes = {
-    '/': Index(),
-    '/contact/': Contact(),
-    '/events/': Events(),
-    '/about/': AboutUs(),
-    '/games-list/': GamesList(),
-    '/create-game/': CreateGame(),
-    '/copy-game/': CopyGame(),
-    '/create-category/': CreateCategory(),
-    '/category-list/': CategoryList()
-}
+# routes = {
+#     '/': Index(),
+#     '/contact/': Contact(),
+#     '/events/': Events(),
+#     '/about/': AboutUs(),
+#     '/games-list/': GamesList(),
+#     '/create-game/': CreateGame(),
+#     '/copy-game/': CopyGame(),
+#     '/create-category/': CreateCategory(),
+#     '/category-list/': CategoryList()
+# }
