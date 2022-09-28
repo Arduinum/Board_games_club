@@ -1,11 +1,15 @@
 class RobotRequests:
     """Класс родитель, для работы с запросами"""
+
     @staticmethod
     def parse_str_data(data: str):
         """Метод класса, который парсит строку, кладя данные в словарь"""
+        print(data)
         data_dict = dict()
+
         if data:
             data = data.split('&')
+
             for key_value in data:
                 data_dict[key_value.split('=')[0]] = key_value.split('=')[1]
         return data_dict
@@ -13,6 +17,7 @@ class RobotRequests:
 
 class GetRequest(RobotRequests):
     """Класс для работы с get запросами"""
+
     def get_request_params(self, environ):
         """Метод класса для получения параметров запроса в виде словаря"""
         query_str = environ['QUERY_STRING']
@@ -21,6 +26,7 @@ class GetRequest(RobotRequests):
 
 class PostRequest(RobotRequests):
     """Класс для работы с post запросами"""
+
     @staticmethod
     def get_wsgi_input_data(environ) -> bytes:
         """Метод класса для проверки содержимого post запроса"""

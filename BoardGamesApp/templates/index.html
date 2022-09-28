@@ -7,9 +7,7 @@
 {% endblock %}
 {% block header %}
     {% include "inc-header.html" %}
-    <div>
-		<a href="/create-category/">Создать категорию</a>
-	</div>
+    <div><a href="/create-category/">Создать категорию</a></div>
     <h1>Список категорий</h1>
     <ul>
         {% for item in data_list %}
@@ -20,6 +18,9 @@
         </li>
         {% endfor %}
     </ul>
+    <li><a href="/gamer-list/">Список игроков</a></li>
+    <li><a href="/create-gamer/">Создать игрока</a></li>
+    <li><a href="/add-gamer/">Добавить игрока на игру</a></li>
 {% endblock %}
 {% block sidebar %}
     {% include "inc-sidebar.html" %}

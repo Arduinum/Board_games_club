@@ -3,16 +3,20 @@ from quopri import decodestring
 from sys import path
 path.append('../')
 from errors import IdItemError, NameItemError
+from patterns.behavioring_patterns import Subject
 
 
 class User:
     """Класс для абстрактного пользователя"""
-    pass
+    def __init__(self, name):
+        self.name = name
 
 
 class Gamer(User):
     """Класс для игрока в настольные игры"""
-    pass
+    def __init__(self, name):
+        self.games = list()
+        super().__init__(name)
 
 
 class DungeonMaster(User):
@@ -28,9 +32,9 @@ class UserFactory:
     }
 
     @classmethod
-    def create_user(cls, type_user):
+    def create_user(cls, type_user, name):
         """Метод класса для создания пользователя (порождающий паттерн Фабричный метод)"""
-        return cls.types_users[type_user]()
+        return cls.types_users[type_user](name)
 
 
 class GamePrototype:
@@ -40,11 +44,22 @@ class GamePrototype:
         return deepcopy(self)
 
 
-class Game(GamePrototype):
+class Game(GamePrototype, Subject):
     """Класс настольная игра"""
     def __init__(self, name, category):
         self.name = name
         self.category = category
+        self.gamers = list()
+        super().__init__()
+
+    def __getitem__(self, gamer):
+        return self.gamers[gamer]
+
+    def add_gamer(self, gamer: Gamer):
+        """Метод класса для добавления нового игрока"""
+        self.gamers.append(gamer)
+        gamer.games.append(self)
+        self.inform()
 
 
 class LiveGame(Game):
@@ -104,9 +119,9 @@ class Engine:
         self.categories = list()
 
     @staticmethod
-    def create_user(type_user):
+    def create_user(type_user, name):
         """Метод класса, вызывающий метод создания пользователя"""
-        return UserFactory.create_user(type_user)
+        return UserFactory.create_user(type_user, name)
 
     @staticmethod
     def create_category(name, category=None):
@@ -138,6 +153,12 @@ class Engine:
         except NameItemError as err:
             print(f'Нет игры где name={name}, {err}')
 
+    def get_gamer(self, name) -> Gamer:
+        """Метод класса для возврта игрока"""
+        for gamer in self.gamers:
+            if name == gamer.name:
+                return gamer
+
     @staticmethod
     def decode_value(value):
         """Метод класса для правильного декодирования в utf-8"""
@@ -165,15 +186,15 @@ class SingletonByName(type):
             return cls.__instance[name]
 
 
-class Logger(metaclass=SingletonByName):
-    """Класс для логирования"""
-    def __init__(self, name):
-        self.name = name
-
-    @staticmethod
-    def log(text):
-        """Метод выполняющий логирование"""
-        print('log ---- ', text)
+# class Logger(metaclass=SingletonByName):
+#     """Класс для логирования"""
+#     def __init__(self, name):
+#         self.name = name
+#
+#     @staticmethod
+#     def log(text):
+#         """Метод выполняющий логирование"""
+#         print('log ---- ', text)
 
 
 if __name__ == '__main__':

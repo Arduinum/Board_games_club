@@ -1,12 +1,18 @@
 from robot_framework.templator import render
 from data import games
-from patterns.creationing_patterns import Engine, Logger
+from patterns.creationing_patterns import Engine
 from patterns.structuring_patterns import AppendRoute, Debug
+from patterns.behavioring_patterns import TelegramNotifier, EmailNotifier, ListView, CreateView, BaseSerializer, \
+    ConsoleWriter, FileWriter
 
 
 site = Engine()
-logger = Logger('main')
+# logger = Logger('main')
+logger_console = ConsoleWriter()
+loger_file = FileWriter()
 routes = dict()
+telegram_notifier = TelegramNotifier()
+email_notifier = EmailNotifier()
 
 
 @AppendRoute(routes=routes, url='/')
@@ -14,6 +20,8 @@ class Index:
     """Класс вьюха главной страницы"""
     @Debug(name='Index')
     def __call__(self, request):
+        logger_console.writer('Главная страница')
+        loger_file.writer('Главная страница (Index)')
         return '200 OK', render('index.html', data_list=site.categories)
 
 
@@ -40,6 +48,8 @@ class PageNewsPrototype:
 
     @Debug(name='PageNews')
     def __call__(self, request):
+        logger_console.writer('Новостная страница')
+        loger_file.writer('Новостная страница (PageNews)')
         return '200 OK', render(f'page_news_{self.num_page_news}.html')
 
 
@@ -63,6 +73,8 @@ class Contact:
     """Класс вьюха страницы контактов"""
     @Debug(name='Contact')
     def __call__(self, request):
+        logger_console.writer('Страница контактов')
+        loger_file.writer('Страница контактов (Contact)')
         return '200 OK', render('contact.html')
 
 
@@ -71,6 +83,8 @@ class Events:
     """Класс вьюха страницы расписание мероприятий"""
     @Debug(name='Events')
     def __call__(self, request):
+        logger_console.writer('Страница расписаний игр')
+        loger_file.writer('Страница расписаний игр (Events)')
         return '200 OK', render('events.html', date=request.get('date', None), data=[games])
 
 
@@ -79,6 +93,8 @@ class AboutUs:
     """Класс вьюха страницы о нас"""
     @Debug(name='AboutUs')
     def __call__(self, request):
+        logger_console.writer('Страница о нас')
+        loger_file.writer('Страница о нас (AboutUs)')
         return '200 OK', render('about_us.html')
 
 
@@ -87,7 +103,9 @@ class GamesList:
     """Класс контроллер список игр"""
     @Debug(name='GamesList')
     def __call__(self, request):
-        logger.log('Список игр')
+        # logger.log('Список игр')
+        logger_console.writer('Страница список игр')
+        loger_file.writer('Страница список игр (GamesList)')
         try:
             category = site.get_category_by_id(int(request['data_get']['id']))
             return '200 OK', render('games_list.html', data_list=category.games, name=category.name, id=category.id)
@@ -112,13 +130,22 @@ class CreateGame:
             if self.category_id != 0:
                 category = site.get_category_by_id(int(self.category_id))
                 game = site.create_game('live_game', name, category)
-                site.games.append(game)
+                game.observers.append(email_notifier)
+                game.observers.append(telegram_notifier)
 
+                site.games.append(game)
                 category.games.append(game)
                 category.game_count()
+
+            logger_console.writer('Страница список игр')
+            loger_file.writer('Страница список игр (GamesList)')
+
             return '200 OK', render('games_list.html', data_list=site.games, name=category.name, id=category.id)
         else:
             try:
+                logger_console.writer('Страница создать игру')
+                loger_file.writer('Страница создать игру (CreateGame)')
+
                 self.category_id = int(request['data_get']['id'])
                 category = site.get_category_by_id(self.category_id)
                 return '200 OK', render('create_game.html', name=category.name, id=category.id)
@@ -145,8 +172,14 @@ class CreateCategory:
             create_category = site.create_category(name, category)
             site.categories.append(create_category)
 
+            logger_console.writer('Главная страница')
+            loger_file.writer('Главная страница (Index)')
+
             return '200 OK', render('index.html', data_list=site.categories)
         else:
+            logger_console.writer('Страница создать категорию')
+            loger_file.writer('Страница создать категорию (CreateCategory)')
+
             categories = site.categories
             return '200 OK', render('create_category.html', categories=categories)
 
@@ -157,7 +190,9 @@ class CategoryList:
 
     @Debug(name='CategoryList')
     def __call__(self, request):
-        logger.log('Список категорий')
+        # logger.log('Список категорий')
+        logger_console.writer('Страница список категорий')
+        loger_file.writer('Страница список категорий (CategoryList)')
         return '200 OK', render('category_list.html', data_list=site.categories)
 
 
@@ -167,6 +202,9 @@ class CopyGame:
 
     @Debug(name='CopyGame')
     def __call__(self, request):
+        logger_console.writer('Страница список игр')
+        loger_file.writer('Страница список игр (GamesList)')
+
         data_get = request['data_get']
         clone_game = None
         try:
@@ -178,6 +216,54 @@ class CopyGame:
                 clone_game = old_game.clone()
                 clone_game.name = clone_name
                 site.games.append(clone_game)
-            return '200 OK', render('game_list.html', data_list=site.games, name=clone_game.category.name)
+            return '200 OK', render('games_list.html', data_list=site.games, name=clone_game.category.name)
         except KeyError:
             return '200 OK', 'Games have not been added yet!'
+
+
+@AppendRoute(routes=routes, url='/gamer-list/')
+class GamerListView(ListView):
+    """Класс вьюха для списка игроков"""
+    queryset = site.gamers
+    template_name = 'gamer_list.html'
+
+
+@AppendRoute(routes=routes, url='/create-gamer/')
+class GamerCreateView(CreateView):
+    """Класс вьюха для создания игрока"""
+    template_name = '/create_gamer.html/'
+
+    def create_object(self, data: dict):
+        """Метод класса для создания объекта игрок"""
+        name = site.decode_value(data['name'])
+        new_gamer = site.create_user('gamer', name)
+        site.gamers.append(new_gamer)
+
+
+@AppendRoute(routes=routes, url='/add-gamer/')
+class AddGamerForGameCreateView(CreateView):
+    """Класс вьюха для добавления игрока для игры"""
+    template_name = 'add_gamer.html'
+
+    def get_context_data(self):
+        """Метод класса для возврата контекста"""
+        context = super().get_context_data()
+        context['games'] = site.games
+        context['gamers'] = site.gamers
+        return context
+
+    def create_object(self, data: dict):
+        """Метод класса для создания объекта"""
+        game_name = site.decode_value(data['game_name'])
+        game = site.get_game(game_name)
+        gamer_name = site.decode_value(data['gamer_name'])
+        gamer = site.get_gamer(gamer_name)
+        game.add_gamer(gamer)
+
+
+@AppendRoute(routes=routes, url='/api/')
+class GameApi:
+    """Класс api для игр"""
+    @Debug(name='GameApi')
+    def __call__(self, request):
+        return '200 OK', BaseSerializer(site.games).coding_data()

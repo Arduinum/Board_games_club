@@ -1,0 +1,15 @@
+<div id="content">
+    <li><a href="/create-gamer/">Создать игрока</a></li>
+    <li><a href="/add-gamer/">Добавить игрока на игру</a></li>
+    <h1>Список игроков</h1>
+    <div>
+        {% for item in data_list %}
+        <li>
+            {{item.name}}
+            {% for course in item.gamers %}
+                {{gamer.name}}
+            {% endfor %}
+        </li>
+        {% endfor %}
+    </div>
+</div>

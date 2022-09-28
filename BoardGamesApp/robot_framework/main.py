@@ -65,5 +65,11 @@ class RobotFramework:
     def saver_form_data(data):
         """Метод класса для сохранения данных формы регистрации на игру в json документ"""
         name_form = [key for key in data.keys()][-1]
-        with open(f'{name_form}_{data["name"]}.json', 'w', encoding='utf-8') as file:
+        name = None
+
+        for key in data.keys():
+            if 'name' in key:
+                name = data[key]
+
+        with open(f'{name_form}_{name}.json', 'w', encoding='utf-8') as file:
             dump(data, file, indent=4, ensure_ascii=False)

@@ -1,0 +1,18 @@
+<div class="content">
+    <li><a href="/gamer-list/">Список игроков</a></li>
+    <li><a href="/create-gamer/">Создать игрока</a></li>
+    <h1>Добавление игрока на игру</h1>
+    <form method="post">
+        <select size="3" name="game_name">
+            {% for item in games %}
+                <option value="{{item.name}}">{{item.name}}</option>
+            {% endfor %}
+        </select>
+        <select size="3" name="gamer_name">
+            {% for item in gamers %}
+                <option value="{{item.name}}">{{item.name}}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Записать</button>
+    </form>
+</div>
