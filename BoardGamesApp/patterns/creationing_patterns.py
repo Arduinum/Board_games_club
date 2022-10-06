@@ -1,9 +1,11 @@
 from copy import deepcopy
+from sqlite3 import connect
 from quopri import decodestring
 from sys import path
 path.append('../')
-from errors import IdItemError, NameItemError
+from errors import IdItemError, NameItemError, DbCommitError, DbUpdateError, DbDeleteError, DbRecNotFoundError
 from patterns.behavioring_patterns import Subject
+from patterns.archetecturing_patterns import DomainObject
 
 
 class User:
@@ -12,7 +14,7 @@ class User:
         self.name = name
 
 
-class Gamer(User):
+class Gamer(User, DomainObject):
     """Класс для игрока в настольные игры"""
     def __init__(self, name):
         self.games = list()
@@ -186,6 +188,82 @@ class SingletonByName(type):
             return cls.__instance[name]
 
 
+class GamerMapper:
+    """Класс для взаимодействия с бд"""
+    def __init__(self, connect):
+        self.connect = connect
+        self.cursor = connect.cursor()
+        self.table_name = 'gamer'
+
+    def all(self):
+        """Метод класса для получения списка данных из бд"""
+        list_items = list()
+        query_to_db_str = f'SELECT * from {self.table_name}'  # sql запрос в str
+        self.cursor.execute(query_to_db_str)  # выполнение запроса
+        for item in self.cursor.fetchall():  # проход по всем данным таблиц
+            id_item, name = item
+            gamer = Gamer(name)
+            gamer.id = id_item
+            list_items.append(gamer)
+        return list_items
+
+    def get_by_id(self, id_item):
+        """Метод класса для получения данных по id из таблицы бд"""
+        query_to_db_str = f'SELECT id, name from {self.table_name} WHERE id=?'
+        self.cursor.execute(query_to_db_str, (id_item, ))
+        result = self.cursor.fetchone()
+        if result:
+            return Gamer(*result)
+
+    def insert(self, obj):
+        """Метод класса для вставки новых данных в таблицу бд"""
+        query_to_db_str = f'INSERT INTO {self.table_name} (name) VALUES (?)'
+        self.cursor.execute(query_to_db_str, (obj.name, ))
+        try:
+            self.connect.commit()
+        except Exception as err:
+            raise DbCommitError(err)
+
+    def update(self, obj):
+        """Метод класса для обновления данных в таблицу бд"""
+        query_to_db_str = f'UPDATE {self.table_name} SET name=? WHERE id=?'
+        self.cursor.execute(query_to_db_str, (obj.name, obj.id))
+        try:
+            self.connect.commit()
+        except Exception as err:
+            raise DbUpdateError(err)
+
+    def delete(self, obj):
+        """Метод класса для удаления данных из таблицы бд"""
+        query_to_db_str = f'DELETE {self.table_name} WHERE id=?'
+        self.cursor.execute(query_to_db_str, (obj.id, ))
+        try:
+            self.connect.commit()
+        except Exception as err:
+            raise DbDeleteError(err)
+
+
+connection = connect('patterns.sqlite')
+
+
+class MapperRegistry:
+    """Класс регистр мапперов (архетектурный системный паттерн - Data Mapper)"""
+    mappers = {
+        'gamer': GamerMapper
+    }
+
+    @staticmethod
+    def get_mapper(obj):
+        """Метод класса для возврата нужнного маппера"""
+        if isinstance(obj, Gamer):
+            return GamerMapper(connection)
+
+    @staticmethod
+    def get_current_mapper(name):
+        """Метод класса вернёт текущий маппер"""
+        return MapperRegistry.mappers[name](connection)
+
+
 # class Logger(metaclass=SingletonByName):
 #     """Класс для логирования"""
 #     def __init__(self, name):
@@ -204,9 +282,9 @@ if __name__ == '__main__':
     category_16 = engine.create_category('+16')
     print(category_16.id, category_16.name, category_16.category)
 
-    user_gamer = engine.create_user('gamer')
+    user_gamer = engine.create_user('gamer', 'Nemo')
     print(user_gamer)
-    user_master = engine.create_user('dungeon_master')
+    user_master = engine.create_user('dungeon_master', 'Garry')
     print(user_master)
 
     game_1 = engine.create_game('live_game', 'D&D', '+16')

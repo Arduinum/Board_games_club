@@ -1,6 +1,5 @@
 from json import dumps, loads
 from pprint import pprint
-
 from BoardGamesApp.robot_framework.templator import render
 
 

@@ -1,9 +1,10 @@
 from robot_framework.templator import render
 from data import games
-from patterns.creationing_patterns import Engine
+from patterns.creationing_patterns import Engine, MapperRegistry
 from patterns.structuring_patterns import AppendRoute, Debug
 from patterns.behavioring_patterns import TelegramNotifier, EmailNotifier, ListView, CreateView, BaseSerializer, \
     ConsoleWriter, FileWriter
+from patterns.archetecturing_patterns import UnitOfWork
 
 
 site = Engine()
@@ -13,6 +14,8 @@ loger_file = FileWriter()
 routes = dict()
 telegram_notifier = TelegramNotifier()
 email_notifier = EmailNotifier()
+UnitOfWork.new_current()
+UnitOfWork.get_current().set_mapper_registry(MapperRegistry)
 
 
 @AppendRoute(routes=routes, url='/')
@@ -227,6 +230,11 @@ class GamerListView(ListView):
     queryset = site.gamers
     template_name = 'gamer_list.html'
 
+    def get_queryset(self):
+        """Метод класса для получения запроса"""
+        mapper = MapperRegistry.get_current_mapper('gamer')
+        return mapper.all()
+
 
 @AppendRoute(routes=routes, url='/create-gamer/')
 class GamerCreateView(CreateView):
@@ -238,6 +246,8 @@ class GamerCreateView(CreateView):
         name = site.decode_value(data['name'])
         new_gamer = site.create_user('gamer', name)
         site.gamers.append(new_gamer)
+        new_gamer.mark_new()
+        UnitOfWork.get_current().commit()
 
 
 @AppendRoute(routes=routes, url='/add-gamer/')
