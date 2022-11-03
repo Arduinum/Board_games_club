@@ -1,0 +1,18 @@
+<div class="content">
+    <li><a href="/dungeon_master-list/">Список данжен мастеров</a></li>
+    <li><a href="/create-dungeon_master/">Создать данжен мастера</a></li>
+    <h1>Добавление данжен мастера на игру</h1>
+    <form method="post">
+        <select size="3" name="game_name">
+            {% for item in games %}
+                <option value="{{item.name}}">{{item.name}}</option>
+            {% endfor %}
+        </select>
+        <select size="3" name="dungeon_master_name">
+            {% for item in dungeon_masters %}
+                <option value="{{item.name}}">{{item.name}}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Записать</button>
+    </form>
+</div>

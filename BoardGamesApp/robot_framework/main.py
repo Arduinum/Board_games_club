@@ -1,12 +1,9 @@
 from quopri import decodestring
 from robot_framework.robot_requests import GetRequest, PostRequest
 from json import dump
-
-
-class PageError404:
-    """Класс, отвечающий за информацию о не найденой странице"""
-    def __call__(self, request):
-        return '404 ERROR', '404 Page Not Found'
+from sys import argv
+argv.append('../')
+from errors import NameFormError, PageError404
 
 
 class RobotFramework:
@@ -67,9 +64,15 @@ class RobotFramework:
         name_form = [key for key in data.keys()][-1]
         name = None
 
-        for key in data.keys():
-            if 'name' in key:
-                name = data[key]
+        try:
+            for key in data.keys():
+                if 'name' in key:
+                    name = data[key]
 
-        with open(f'{name_form}_{name}.json', 'w', encoding='utf-8') as file:
-            dump(data, file, indent=4, ensure_ascii=False)
+            if name is None:
+                raise NameFormError
+        except NameFormError as err:
+            print(f'Для формы не существует имени, {err}!')
+        else:
+            with open(f'forms_json/{name_form}_{name}.json', 'w', encoding='utf-8') as file:
+                dump(data, file, indent=4, ensure_ascii=False)

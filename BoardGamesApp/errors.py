@@ -1,3 +1,9 @@
+class PageError404:
+    """Класс, отвечающий за информацию о не найденой странице"""
+    def __call__(self, request):
+        return '404 ERROR', '404 Page Not Found'
+
+
 class IdItemError(Exception):
     """Класс ошибка категории"""
     def __str__(self):
@@ -44,6 +50,18 @@ class DbRecNotFoundError(Exception):
 
     def __str__(self):
         return f'DbRecNotFoundError: {self.mess}'
+
+
+class NameFormError(Exception):
+    """Класс ошибка имени в форме"""
+    def __str__(self):
+        return 'NameFormError'
+
+
+class AddDungeonMasterError(Exception):
+    """Класс ошибка добавления данжен мастера на игру"""
+    def __str__(self):
+        return 'AddDungeonMasterError'
 
 
 if __name__ == '__main__':

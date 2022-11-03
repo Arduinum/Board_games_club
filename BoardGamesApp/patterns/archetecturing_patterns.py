@@ -65,6 +65,7 @@ class UnitOfWork:
 
     @classmethod
     def get_current(cls):
+        """Метод класса для получения нового потока"""
         return cls.current_thread.unit_of_work
 
 

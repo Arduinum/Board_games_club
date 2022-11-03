@@ -1,0 +1,15 @@
+<div id="content">
+    <li><a href="/create-dungeon_master/">Создать данжен мастера</a></li>
+    <li><a href="/add-dungeon_master/">Добавить данжен мастера на игру</a></li>
+    <h1>Список данжен мастеров</h1>
+    <div>
+        {% for item in data_list %}
+        <li>
+            {{item.name}}
+            {% for course in item.dungeon_masters %}
+                {{dungeon_master.name}}
+            {% endfor %}
+        </li>
+        {% endfor %}
+    </div>
+</div>

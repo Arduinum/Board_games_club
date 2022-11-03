@@ -8,7 +8,6 @@ from patterns.archetecturing_patterns import UnitOfWork
 
 
 site = Engine()
-# logger = Logger('main')
 logger_console = ConsoleWriter()
 loger_file = FileWriter()
 routes = dict()
@@ -26,22 +25,6 @@ class Index:
         logger_console.writer('Главная страница')
         loger_file.writer('Главная страница (Index)')
         return '200 OK', render('index.html', data_list=site.categories)
-
-
-# @AppendRoute(routes=routes, url='/news-1/')
-# class PageNews1:
-#     """Класс вьюха для новостной статьи"""
-#     @Debug(name='PageNews1')
-#     def __call__(self, request):
-#         return '200 OK', render('page_news_1.html')
-#
-#
-# @AppendRoute(routes=routes, url='/news-2/')
-# class PageNews2:
-#     """Класс вьюха для новостной статьи"""
-#     @Debug(name='PageNews2')
-#     def __call__(self, request):
-#         return '200 OK', render('page_news_2.html')
 
 
 class PageNewsPrototype:
@@ -193,7 +176,6 @@ class CategoryList:
 
     @Debug(name='CategoryList')
     def __call__(self, request):
-        # logger.log('Список категорий')
         logger_console.writer('Страница список категорий')
         loger_file.writer('Страница список категорий (CategoryList)')
         return '200 OK', render('category_list.html', data_list=site.categories)
@@ -269,6 +251,56 @@ class AddGamerForGameCreateView(CreateView):
         gamer_name = site.decode_value(data['gamer_name'])
         gamer = site.get_gamer(gamer_name)
         game.add_gamer(gamer)
+
+
+@AppendRoute(routes=routes, url='/dungeon_master-list/')
+class DungeonMasterListView(ListView):
+    """Класс вьюха для списка данжен мастеров"""
+    queryset = site.dungeon_masters
+    template_name = 'dungeon_master_list.html'
+
+    def get_queryset(self):
+        """Метод класса для получения запроса"""
+        mapper = MapperRegistry.get_current_mapper('dungeon_master')
+        return mapper.all()
+
+
+@AppendRoute(routes=routes, url='/create-dungeon_master/')
+class DungeonMasterCreateView(CreateView):
+    """Класс вьюха для создания данжен мастера"""
+    template_name = '/create_dungeon_master.html/'
+
+    def create_object(self, data: dict):
+        """Метод класса для создания объекта данжен мастер"""
+        name = site.decode_value(data['name'])
+        new_dungeon_master = site.create_user('dungeon_master', name)
+        site.dungeon_masters.append(new_dungeon_master)
+        new_dungeon_master.mark_new()
+        UnitOfWork.get_current().commit()
+
+
+@AppendRoute(routes=routes, url='/add-dungeon_master/')
+class AddDungeonMasterForGameCreateView(CreateView):
+    """Класс вьюха для добавления данжен мастера на игру"""
+    template_name = 'add_dungeon_master.html'
+
+    def get_context_data(self):
+        """Метод класса для возврата контекста"""
+        context = super().get_context_data()
+        print(context)
+        context['games'] = site.games
+        print(site.games)
+        context['dungeon_masters'] = site.dungeon_masters
+        print(site.dungeon_masters)
+        return context
+
+    def create_object(self, data: dict):
+        """Метод класса для создания объекта"""
+        game_name = site.decode_value(data['game_name'])
+        game = site.get_game(game_name)
+        dungeon_master_name = site.decode_value(data['dungeon_master_name'])
+        dungeon_master = site.get_gamer(dungeon_master_name)
+        game.add_dungeon_master(dungeon_master)
 
 
 @AppendRoute(routes=routes, url='/api/')

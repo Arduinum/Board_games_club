@@ -3,7 +3,8 @@ from sqlite3 import connect
 from quopri import decodestring
 from sys import path
 path.append('../')
-from errors import IdItemError, NameItemError, DbCommitError, DbUpdateError, DbDeleteError, DbRecNotFoundError
+from errors import IdItemError, NameItemError, DbCommitError, DbUpdateError, DbDeleteError, AddDungeonMasterError, \
+    DbRecNotFoundError
 from patterns.behavioring_patterns import Subject
 from patterns.archetecturing_patterns import DomainObject
 
@@ -21,9 +22,11 @@ class Gamer(User, DomainObject):
         super().__init__(name)
 
 
-class DungeonMaster(User):
+class DungeonMaster(User, DomainObject):
     """Класс для ведущего настольной игры"""
-    pass
+    def __init__(self, name):
+        self.games = list()
+        super().__init__(name)
 
 
 class UserFactory:
@@ -48,10 +51,12 @@ class GamePrototype:
 
 class Game(GamePrototype, Subject):
     """Класс настольная игра"""
-    def __init__(self, name, category):
+    def __init__(self, type_game, name, category):
+        self.type_game = type_game
         self.name = name
         self.category = category
         self.gamers = list()
+        self.dungeon_master = None
         super().__init__()
 
     def __getitem__(self, gamer):
@@ -62,6 +67,18 @@ class Game(GamePrototype, Subject):
         self.gamers.append(gamer)
         gamer.games.append(self)
         self.inform()
+
+    def add_dungeon_master(self, dungeon_master: DungeonMaster):
+        """Метод класса для добавления нового данжен мастера"""
+        try:
+            if self.dungeon_master is None:
+                self.dungeon_master = dungeon_master
+            else:
+                raise AddDungeonMasterError
+        except AddDungeonMasterError as err:
+            print(f'Может быть только один данжен мастер на игре, {err}!')
+        else:
+            dungeon_master.games.append(self)
 
 
 class LiveGame(Game):
@@ -90,24 +107,19 @@ class GameFactory:
     @classmethod
     def create_game(cls, type_game, name, category):
         """Метод для создания игр (порождающий паттерн фабричный метод)"""
-        return cls.types_games[type_game](name, category)
+        return cls.types_games[type_game](type_game, name, category)
 
 
 class Category:
     """Класс категория настольной игры"""
-    num_id = 0
-
-    def __init__(self, name, category):
-        Category.num_id += 1
-        self.id = Category.num_id
+    def __init__(self, name):
         self.name = name
-        self.category = category
         self.games = list()
 
     def game_count(self):
         """Метод класса, который считает колличество игр"""
         count = len(self.games)
-        if self.category:
+        if self.name:
             count += 1
         return count
 
@@ -126,19 +138,9 @@ class Engine:
         return UserFactory.create_user(type_user, name)
 
     @staticmethod
-    def create_category(name, category=None):
+    def create_category(name):
         """Метод класса, вызывающий класс категорию для создания категории"""
-        return Category(name, category)
-
-    def get_category_by_id(self, id):
-        """Метод класса для получения категории по её id"""
-        try:
-            for category in self.categories:
-                if category.id == id:
-                    return category
-            raise IdItemError
-        except IdItemError as err:
-            print(f'Нет категории где id={id}, {err}')
+        return Category(name)
 
     @staticmethod
     def create_game(tape_game, name, category):
@@ -188,32 +190,20 @@ class SingletonByName(type):
             return cls.__instance[name]
 
 
-class GamerMapper:
-    """Класс для взаимодействия с бд"""
+class ObjectMapper:
+    """Класс абстрактный маппер"""
     def __init__(self, connect):
         self.connect = connect
         self.cursor = connect.cursor()
-        self.table_name = 'gamer'
+        self.table_name = 'table'
 
     def all(self):
         """Метод класса для получения списка данных из бд"""
-        list_items = list()
-        query_to_db_str = f'SELECT * from {self.table_name}'  # sql запрос в str
-        self.cursor.execute(query_to_db_str)  # выполнение запроса
-        for item in self.cursor.fetchall():  # проход по всем данным таблиц
-            id_item, name = item
-            gamer = Gamer(name)
-            gamer.id = id_item
-            list_items.append(gamer)
-        return list_items
+        pass
 
     def get_by_id(self, id_item):
         """Метод класса для получения данных по id из таблицы бд"""
-        query_to_db_str = f'SELECT id, name from {self.table_name} WHERE id=?'
-        self.cursor.execute(query_to_db_str, (id_item, ))
-        result = self.cursor.fetchone()
-        if result:
-            return Gamer(*result)
+        pass
 
     def insert(self, obj):
         """Метод класса для вставки новых данных в таблицу бд"""
@@ -235,12 +225,153 @@ class GamerMapper:
 
     def delete(self, obj):
         """Метод класса для удаления данных из таблицы бд"""
-        query_to_db_str = f'DELETE {self.table_name} WHERE id=?'
+        query_to_db_str = f'DELETE FROM {self.table_name} WHERE id=?'
         self.cursor.execute(query_to_db_str, (obj.id, ))
         try:
             self.connect.commit()
         except Exception as err:
             raise DbDeleteError(err)
+
+
+class GamerMapper(ObjectMapper):
+    """Класс для взаимодействия с бд для геймера"""
+    def __init__(self, connect):
+        super().__init__(connect)
+        self.table_name = 'gamer'
+
+    def all(self):
+        """Метод класса для получения списка данных из бд"""
+        list_items = list()
+        query_to_db_str = f'SELECT * from {self.table_name}'  # sql запрос в str
+        self.cursor.execute(query_to_db_str)  # выполнение запроса
+        for item in self.cursor.fetchall():  # проход по всем данным таблиц
+            id_item, name = item
+            gamer_obj = Gamer(name)
+            gamer_obj.id = id_item
+            list_items.append(gamer_obj)
+        return list_items
+
+    def get_by_id(self, id_item):
+        """Метод класса для получения данных по id из таблицы бд"""
+        query_to_db_str = f'SELECT id, name from {self.table_name} WHERE id=?'
+        self.cursor.execute(query_to_db_str, (id_item, ))
+        result = self.cursor.fetchone()
+        if result:
+            gamer_obj = Gamer(name=result[1])
+            gamer_obj.id = result[0]
+            return gamer_obj
+        else:
+            raise DbRecNotFoundError(f'Игрок с id = {id_item} не найден!')
+
+
+class DungeonMasterMapper(ObjectMapper):
+    """Класс для взаимодействия с бд для данжен мастера"""
+    def __init__(self, connect):
+        super().__init__(connect)
+        self.table_name = 'dungeon_master'
+
+    def all(self):
+        """Метод класса для получения списка данных из бд"""
+        list_items = list()
+        query_to_db_str = f'SELECT * from {self.table_name}'  # sql запрос в str
+        self.cursor.execute(query_to_db_str)  # выполнение запроса
+        for item in self.cursor.fetchall():  # проход по всем данным таблиц
+            id_item, name = item
+            dungeon_master_obj = DungeonMaster(name)
+            dungeon_master_obj.id = id_item
+            list_items.append(dungeon_master_obj)
+        return list_items
+
+    def get_by_id(self, id_item):
+        """Метод класса для получения данных по id из таблицы бд"""
+        query_to_db_str = f'SELECT id, name from {self.table_name} WHERE id=?'
+        self.cursor.execute(query_to_db_str, (id_item, ))
+        result = self.cursor.fetchone()
+        if result:
+            dungeon_master_obj = DungeonMaster(name=result[1])
+            dungeon_master_obj.id = result[0]
+            return dungeon_master_obj
+        else:
+            raise DbRecNotFoundError(f'Данжен мастер с id = {id_item} не найден!')
+
+
+class CategoryMapper(ObjectMapper):
+    """Класс для взаимодействия с бд для категории"""
+    def __init__(self, connect):
+        super().__init__(connect)
+        self.table_name = 'category'
+
+    def all(self):
+        """Метод класса для получения списка данных из бд"""
+        list_items = list()
+        query_to_db_str = f'SELECT * from {self.table_name}'  # sql запрос в str
+        self.cursor.execute(query_to_db_str)  # выполнение запроса
+        for item in self.cursor.fetchall():  # проход по всем данным таблиц
+            id_item, name = item
+            category_obj = Category(name)
+            category_obj.id = id_item
+            list_items.append(category_obj)
+        return list_items
+
+    def get_by_id(self, id_item):
+        """Метод класса для получения данных по id из таблицы бд"""
+        query_to_db_str = f'SELECT id, name from {self.table_name} WHERE id=?'
+        self.cursor.execute(query_to_db_str, (id_item, ))
+        result = self.cursor.fetchone()
+        if result:
+            category_obj = Category(name=result[1])
+            category_obj.id = result[0]
+            return category_obj
+        else:
+            raise DbRecNotFoundError(f'Категория с id = {id_item} не найдена!')
+
+
+class GameMapper(ObjectMapper):
+    def __init__(self, connect):
+        super().__init__(connect)
+        self.table_name = 'game'
+
+    def all(self):
+        """Метод класса для получения списка данных из бд"""
+        list_items = list()
+        query_to_db_str = f'SELECT * from {self.table_name}'  # sql запрос в str
+        self.cursor.execute(query_to_db_str)  # выполнение запроса
+        for item in self.cursor.fetchall():  # проход по всем данным таблиц
+            id_item, type_game, name, category = item
+            game_obj = Game(type_game, name, category)
+            game_obj.id = id_item
+            list_items.append(game_obj)
+        return list_items
+
+    def insert(self, obj):
+        """Метод класса для вставки новых данных в таблицу бд"""
+        query_to_db_str = f'INSERT INTO {self.table_name} (type_game, name, category) VALUES (?, ?, ?)'
+        self.cursor.execute(query_to_db_str, (obj.type_game, obj.name, obj.category))
+        try:
+            self.connect.commit()
+        except Exception as err:
+            raise DbCommitError(err)
+
+    def update(self, obj):
+        """Метод класса для обновления данных в таблицу бд"""
+        query_to_db_str = f'UPDATE {self.table_name} SET type_game=?, name=?, category=? WHERE id=?'
+        self.cursor.execute(query_to_db_str, (obj.type_game, obj.name, obj.category, obj.id))
+        try:
+            self.connect.commit()
+        except Exception as err:
+            raise DbUpdateError(err)
+
+    def get_by_id(self, id_item):
+        """Метод класса для получения данных по id из таблицы бд"""
+        query_to_db_str = f'SELECT id, type_game, name, category from {self.table_name} WHERE id=?'
+        self.cursor.execute(query_to_db_str, (id_item, ))
+        result = self.cursor.fetchone()
+        if result:
+            game_obj = Game(type_game=result[1], name=result[2], category=result[3])
+            game_obj.id = result[0]
+            return game_obj
+        else:
+            raise DbRecNotFoundError(f'Игра с id = {id_item} не найдена!')
 
 
 connection = connect('patterns.sqlite')
@@ -249,7 +380,10 @@ connection = connect('patterns.sqlite')
 class MapperRegistry:
     """Класс регистр мапперов (архетектурный системный паттерн - Data Mapper)"""
     mappers = {
-        'gamer': GamerMapper
+        'gamer': GamerMapper,
+        'dungeon_master': DungeonMasterMapper,
+        'category': CategoryMapper,
+        'game': GameMapper
     }
 
     @staticmethod
@@ -257,6 +391,12 @@ class MapperRegistry:
         """Метод класса для возврата нужнного маппера"""
         if isinstance(obj, Gamer):
             return GamerMapper(connection)
+        elif isinstance(obj, DungeonMaster):
+            return DungeonMasterMapper(connection)
+        elif isinstance(obj, Category):
+            return CategoryMapper(connection)
+        elif isinstance(obj, Game):
+            return GameMapper(connection)
 
     @staticmethod
     def get_current_mapper(name):
@@ -264,23 +404,12 @@ class MapperRegistry:
         return MapperRegistry.mappers[name](connection)
 
 
-# class Logger(metaclass=SingletonByName):
-#     """Класс для логирования"""
-#     def __init__(self, name):
-#         self.name = name
-#
-#     @staticmethod
-#     def log(text):
-#         """Метод выполняющий логирование"""
-#         print('log ---- ', text)
-
-
 if __name__ == '__main__':
     engine = Engine()
     category_18 = engine.create_category('+18')
-    print(category_18.id, category_18.name, category_18.category)
+    print(category_18.name)
     category_16 = engine.create_category('+16')
-    print(category_16.id, category_16.name, category_16.category)
+    print(category_16.name)
 
     user_gamer = engine.create_user('gamer', 'Nemo')
     print(user_gamer)

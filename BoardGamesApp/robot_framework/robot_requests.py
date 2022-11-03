@@ -4,7 +4,6 @@ class RobotRequests:
     @staticmethod
     def parse_str_data(data: str):
         """Метод класса, который парсит строку, кладя данные в словарь"""
-        print(data)
         data_dict = dict()
 
         if data:
